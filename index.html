@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-bg: #0f0f23;
+            --secondary-bg: #1a1a2e;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #00d4ff;
+            --accent-hover: #00b8e6;
+            --user-msg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bot-msg: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.1);
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0c0c1d 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 15, 35, 0.9);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--accent), #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .avatar.user {
+            background: var(--user-msg);
+        }
+
+        .avatar.bot {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 16px 20px;
+            border-radius: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+        }
+
+        .message.user .message-content {
+            background: var(--user-msg);
+            border-radius: 20px 20px 5px 20px;
+        }
+
+        .message.bot .message-content {
+            background: var(--bot-msg);
+            border-radius: 20px 20px 20px 5px;
+        }
+
+        .message-text {
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        /* File attachment styling */
+        .file-attachment {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-attachment .file-icon {
+            font-size: 1.2rem;
+        }
+
+        .file-attachment .file-info {
+            flex: 1;
+        }
+
+        .file-attachment .file-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .file-attachment .file-size {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Markdown styling */
+        .message-text h1, 
+        .message-text h2, 
+        .message-text h3 {
+            color: var(--accent);
+            margin: 16px 0 12px 0;
+            font-weight: 600;
+        }
+
+        .message-text h1 {
+            font-size: 1.4rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+        }
+
+        .message-text h2 {
+            font-size: 1.2rem;
+        }
+
+        .message-text h3 {
+            font-size: 1.1rem;
+        }
+
+        .message-text p {
+            margin: 12px 0;
+        }
+
+        .message-text ul, 
+        .message-text ol {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .message-text li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+
+        .message-text strong {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .message-text em {
+            color: #ff6b9d;
+            font-style: italic;
+        }
+
+        .message-text code {
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--accent);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .message-text pre {
+            background: var(--secondary-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+
+        .message-text pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-text blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 16px;
+            margin: 16px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .message-text table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            background: var(--secondary-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .message-text th, 
+        .message-text td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .message-text th {
+            background: var(--accent);
+            color: white;
+            font-weight: 600;
+        }
+
+        .message-text tr:last-child td {
+            border-bottom: none;
+        }
+
+        .message-text tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .financial-highlight {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(255, 107, 157, 0.1));
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .profit-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .company-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profit-amount {
+            color: #00ff88;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .typing-indicator.show {
+            display: flex;
+        }
+
+        .typing-dots {
+            background: var(--bot-msg);
+            padding: 16px 20px;
+            border-radius: 20px 20px 20px 5px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 60%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            30% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .input-container {
+            padding: 20px;
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            max-width: 100%;
+            position: relative;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            resize: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            min-height: 24px;
+            max-height: 150px;
+            line-height: 1.5;
+        }
+
+        .message-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+        }
+
+        .message-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .attachment-button {
+            padding: 16px;
+            background: var(--card-bg);
+            color: var(--accent);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            backdrop-filter: blur(10px);
+        }
+
+        .attachment-button:hover:not(:disabled) {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .attachment-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .send-button {
+            padding: 16px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .selected-file-display {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .selected-file-display.show {
+            display: flex;
+        }
+
+        .selected-file-info {
+            flex: 1;
+        }
+
+        .selected-file-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .selected-file-size {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .remove-file-button {
+            background: rgba(255, 107, 157, 0.2);
+            color: #ff6b9d;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .remove-file-button:hover {
+            background: #ff6b9d;
+            color: white;
+        }
+
+        .error-message {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid rgba(255, 59, 48, 0.3);
+            color: #ff6b6b;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .welcome-message h2 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .example-questions {
+            display: grid;
+            gap: 12px;
+            margin-top: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .example-question {
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            backdrop-filter: blur(10px);
+        }
+
+        .example-question:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .chat-container {
+                padding: 15px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .input-container {
+                padding: 15px;
+            }
+
+            .input-wrapper {
+                gap: 8px;
+            }
+
+            .message-input,
+            .send-button {
+                padding: 14px 16px;
+            }
+
+            .attachment-button {
+                width: 48px;
+                height: 48px;
+                padding: 14px;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>💰 Financial Assistant</h1>
+            <p>Your intelligent companion for investment and financial guidance</p>
+        </header>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message" id="welcomeMessage">
+                <h2>👋 Welcome to Financial Chat</h2>
+                <p>I'm here to help you with investment advice, financial data, and market insights. Ask me anything!</p>
+                
+                <div class="example-questions">
+                    <div class="example-question" onclick="sendExampleQuestion('Bagaimana cara memulai investasi untuk pemula?')">
+                        🚀 Bagaimana cara memulai investasi untuk pemula?
+                    </div>
+                    <div class="example-question" onclick="sendExampleQuestion('Apa saja jenis investasi yang cocok untuk jangka panjang?')">
+                        📈 Apa saja jenis investasi yang cocok untuk jangka panjang?
+                    </div>
+                    <div class="example-question" onclick="sendExampleQuestion('Bagaimana cara diversifikasi portfolio yang baik?')">
+                        🎯 Bagaimana cara diversifikasi portfolio yang baik?
+                    </div>
+                    <div class="example-question" onclick="sendExampleQuestion('Kapan waktu yang tepat untuk membeli saham?')">
+                        ⏰ Kapan waktu yang tepat untuk membeli saham?
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="avatar bot">🤖</div>
+                <div class="typing-dots">
+                    <div class="dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="selected-file-display" id="selectedFileDisplay">
+                <div class="selected-file-info">
+                    <div class="selected-file-name" id="selectedFileName"></div>
+                    <div class="selected-file-size" id="selectedFileSize"></div>
+                </div>
+                <button class="remove-file-button" onclick="removeFile()">×</button>
+            </div>
+            
+            <div class="input-wrapper">
+                <input 
+                    type="file" 
+                    class="file-input" 
+                    id="fileInput"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg"
+                    onchange="handleFileSelect(event)"
+                />
+                <button 
+                    class="attachment-button" 
+                    id="attachmentButton" 
+                    onclick="document.getElementById('fileInput').click()"
+                    title="Attach file"
+                >
+                    📎
+                </button>
+                <textarea 
+                    class="message-input" 
+                    id="messageInput" 
+                    placeholder="Ask about investments, financial planning, market trends..."
+                    rows="1"
+                ></textarea>
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    📤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <script>
+        const API_URL = 'https://fin-n8n-preworkshop.app.n8n.cloud/webhook/chat_financial';
+        let isWaiting = false;
+        let sessionId = null;
+        let selectedFile = null;
+
+        // Initialize session ID
+        function initializeSession() {
+            sessionId = sessionStorage.getItem("fin_session_id");
+            if (!sessionId) {
+                if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                    sessionId = crypto.randomUUID();
+                } else {
+                    sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0;
+                        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                }
+                sessionStorage.setItem("fin_session_id", sessionId);
+            }
+        }
+
+        // Configure marked for better formatting
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const attachmentButton = document.getElementById('attachmentButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const selectedFileDisplay = document.getElementById('selectedFileDisplay');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const selectedFileSize = document.getElementById('selectedFileSize');
+
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        // Handle Enter key
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!isWaiting && (this.value.trim() || selectedFile)) {
+                    sendMessage();
+                }
+            }
+        });
+
+        // File handling functions
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File size must be less than 10MB');
+                    event.target.value = '';
+                    return;
+                }
+                
+                selectedFile = file;
+                displaySelectedFile(file);
+            }
+        }
+
+        function displaySelectedFile(file) {
+            selectedFileName.textContent = file.name;
+            selectedFileSize.textContent = formatFileSize(file.size);
+            selectedFileDisplay.classList.add('show');
+        }
+
+        function removeFile() {
+            selectedFile = null;
+            selectedFileDisplay.classList.remove('show');
+            document.getElementById('fileInput').value = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function getFileIcon(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄',
+                'doc': '📝', 'docx': '📝',
+                'xls': '📊', 'xlsx': '📊',
+                'csv': '📋',
+                'txt': '📄',
+                'png': '🖼️', 'jpg': '🖼️', 'jpeg': '🖼️',
+            };
+            return icons[extension] || '📎';
+        }
+
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // Remove the data URL prefix (data:type/subtype;base64,)
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function sendExampleQuestion(question) {
+            messageInput.value = question;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message && !selectedFile) return;
+            if (isWaiting) return;
+
+            // Hide welcome message on first interaction
+            if (welcomeMessage) {
+                welcomeMessage.style.display = 'none';
+            }
+
+            // Add user message with file attachment if present
+            addMessage(message, 'user', selectedFile);
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            isWaiting = true;
+            sendButton.disabled = true;
+            attachmentButton.disabled = true;
+
+            try {
+                // Prepare request body
+                const requestBody = {
+                    chatInput: message,
+                    session_id: sessionId
+                };
+
+                // Add file data if present
+                if (selectedFile) {
+                    const fileBase64 = await fileToBase64(selectedFile);
+                    requestBody.attachment = {
+                        fileName: selectedFile.name,
+                        fileType: selectedFile.type,
+                        fileSize: selectedFile.size,
+                        fileData: fileBase64
+                    };
+                }
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Simulate realistic typing delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                hideTypingIndicator();
+                
+                if (data.AIResponse) {
+                    addMessage(data.AIResponse, 'bot');
+                } else {
+                    throw new Error('No response received from the server');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                hideTypingIndicator();
+                
+                let errorMessage = 'Maaf, terjadi kesalahan saat menghubungi server. Silakan coba lagi.';
+                
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+                } else if (error.message.includes('500')) {
+                    errorMessage = 'Server sedang mengalami masalah. Silakan coba lagi nanti.';
+                }
+                
+                addMessage(errorMessage, 'bot', null, true);
+            }
+
+            // Clear selected file after sending
+            if (selectedFile) {
+                removeFile();
+            }
+
+            isWaiting = false;
+            sendButton.disabled = false;
+            attachmentButton.disabled = false;
+            messageInput.focus();
+        }
+
+        function addMessage(text, sender, attachedFile = null, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${sender}`;
+            avatar.textContent = sender === 'user' ? '👤' : '🤖';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            if (isError) {
+                contentDiv.classList.add('error-message');
+            }
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            
+            if (sender === 'bot' && !isError) {
+                // Parse markdown for bot responses
+                const htmlContent = marked.parse(text);
+                textDiv.innerHTML = enhanceFinancialData(htmlContent);
+            } else {
+                textDiv.textContent = text;
+            }
+            
+            contentDiv.appendChild(textDiv);
+
+            // Add file attachment display for user messages
+            if (attachedFile && sender === 'user') {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'file-attachment';
+                fileDiv.innerHTML = `
+                    <span class="file-icon">${getFileIcon(attachedFile.name)}</span>
+                    <div class="file-info">
+                        <div class="file-name">${attachedFile.name}</div>
+                        <div class="file-size">${formatFileSize(attachedFile.size)}</div>
+                    </div>
+                `;
+                contentDiv.appendChild(fileDiv);
+            }
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+            
+            // Insert before typing indicator
+            chatContainer.insertBefore(messageDiv, typingIndicator);
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+        }
+
+        function enhanceFinancialData(htmlContent) {
+            // Enhance financial data presentation
+            let enhanced = htmlContent;
+            
+            // Convert numbered lists of companies to styled profit items
+            enhanced = enhanced.replace(/<ol>([\s\S]*?)<\/ol>/gi, function(match, listContent) {
+                if (listContent.includes('trillion') || listContent.includes('triliun') || listContent.includes('IDR')) {
+                    // This looks like a financial ranking list
+                    const items = listContent.match(/<li>([\s\S]*?)<\/li>/gi);
+                    if (items) {
+                        let styledItems = items.map(item => {
+                            let content = item.replace(/<\/?li>/gi, '');
+                            
+                            // Extract company name and amount
+                            const match = content.match(/^(.*?):\s*(.*?)(?:\.|$)/);
+                            if (match) {
+                                const [, company, amount] = match;
+                                return `
+                                    <div class="profit-item">
+                                        <span class="company-name">${company.trim()}</span>
+                                        <span class="profit-amount">${amount.trim()}</span>
+                                    </div>
+                                `;
+                            }
+                            return `<div class="profit-item">${content}</div>`;
+                        }).join('');
+                        
+                        return `<div class="financial-highlight">${styledItems}</div>`;
+                    }
+                }
+                return match; // Return original if not financial data
+            });
+            
+            // Highlight currency amounts (IDR, USD, etc.)
+            enhanced = enhanced.replace(/(\d{1,3}(?:[.,]\d{2,3})*)\s*(trillion|billion|million|juta|miliar|triliun)\s*(IDR|USD|Rp)/gi, 
+                '<span class="profit-amount">💰 $1 $2 $3</span>');
+            
+            // Highlight percentage gains/profits
+            enhanced = enhanced.replace(/(\d+\.?\d*)%/g, 
+                '<span class="profit-amount">📈 $1%</span>');
+            
+            // Make company names with "Tbk" stand out
+            enhanced = enhanced.replace(/\*\*([^*]+(?:Tbk|PT)[^*]*)\*\*/g, 
+                '<span class="company-name">🏢 $1</span>');
+            
+            // Add icons to section headers
+            enhanced = enhanced.replace(/<h2>([^<]+)<\/h2>/g, '<h2>📊 $1</h2>');
+            enhanced = enhanced.replace(/<h3>([^<]+)<\/h3>/g, '<h3>💡 $1</h3>');
+            
+            // Highlight risk warnings
+            enhanced = enhanced.replace(/(\*\*Risiko[^*]*\*\*)/gi, 
+                '<div style="background: rgba(255, 107, 157, 0.1); border-left: 4px solid #ff6b9d; padding: 12px; margin: 12px 0; border-radius: 8px;">⚠️ $1</div>');
+            
+            return enhanced;
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.classList.add('show');
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.classList.remove('show');
+        }
+
+        // Initialize session and focus input on load
+        window.addEventListener('load', () => {
+            initializeSession();
+            messageInput.focus();
+        });
+
+        // Handle page visibility for better UX
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                messageInput.focus();
+            }
+        });
+    </script>
+</body>
+</html>
