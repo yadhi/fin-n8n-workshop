@@ -1,0 +1,114 @@
+{
+  "name": "tugas-webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "45de80f3-0083-4b90-87b1-4efaf030134b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        480
+      ],
+      "id": "91127a14-47d0-4566-aca5-b87c4bc54d57",
+      "name": "Webhook",
+      "webhookId": "45de80f3-0083-4b90-87b1-4efaf030134b"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{\n{\n  \"AIResponse\": $json.output\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        144,
+        480
+      ],
+      "id": "34bba74e-727f-414f-92fa-1223087833b6",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "VCPCnephfx6Fnm0d",
+          "mode": "list",
+          "cachedResultName": "MainAgent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "body_chatInput": "={{ $json.body.chatInput }}"
+          },
+          "matchingColumns": [
+            "body_chatInput"
+          ],
+          "schema": [
+            {
+              "id": "body_chatInput",
+              "displayName": "body_chatInput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        480
+      ],
+      "name": "Call MainAgent",
+      "id": "624b85ec-04af-42f8-92e1-a1fd1b0add0d"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Call MainAgent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call MainAgent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9e052d42-f1a5-4468-8a44-dc3f0acffd18",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d9561b20e363e353ee760d20e64e65da6d3b92f63da0091c23661c30e573fb18"
+  },
+  "id": "sSQzWo8QDBcvnrWt",
+  "tags": []
+}

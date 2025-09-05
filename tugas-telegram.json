@@ -1,0 +1,130 @@
+{
+  "name": "tugas-telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -432,
+        144
+      ],
+      "id": "b63cba92-2c00-4a4d-8819-14d222ee1430",
+      "name": "Telegram Trigger",
+      "webhookId": "32506a32-021f-48e7-b73d-232897e3f67f",
+      "credentials": {
+        "telegramApi": {
+          "id": "ncVNSO5YHNfXL1f6",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        48,
+        144
+      ],
+      "id": "cd5a1ba2-ac0c-45c5-b00b-3c4dfd010490",
+      "name": "Send a text message",
+      "webhookId": "282dacae-b98d-40ab-b78a-ed3cdde0237a",
+      "credentials": {
+        "telegramApi": {
+          "id": "ncVNSO5YHNfXL1f6",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "VCPCnephfx6Fnm0d",
+          "mode": "list",
+          "cachedResultName": "MainAgent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "body_chatInput": "={{ $json.message.text }}"
+          },
+          "matchingColumns": [
+            "body_chatInput"
+          ],
+          "schema": [
+            {
+              "id": "body_chatInput",
+              "displayName": "body_chatInput",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -176,
+        144
+      ],
+      "name": "Call MainAgent",
+      "id": "b006aeb6-227a-4e85-91cf-c74eb9292873"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call MainAgent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call MainAgent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c78ab491-a2f8-4f68-9139-5c4c9f60ecbb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d9561b20e363e353ee760d20e64e65da6d3b92f63da0091c23661c30e573fb18"
+  },
+  "id": "FNIPGAq1UqpU72be",
+  "tags": []
+}
